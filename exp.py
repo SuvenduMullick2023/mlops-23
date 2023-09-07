@@ -21,8 +21,8 @@ X, y = read_digits()
 # 3. Data splitting -- to create train and test sets
 
 # X_train, X_test, y_train, y_test = split_data(X,y, test_size=0.3)
-test_size = [0.1, 0.2, 0.3]
-dev_size = [0.1, 0.2, 0.3]
+test_size = [0.1, 0.2, 0.3,0.4]
+dev_size = [0.1, 0.2, 0.3,0.4]
 for i in test_size :
     for j in dev_size : 
         X_train, X_test,X_dev, y_train, y_test, y_dev = split_train_dev_test(X, y, test_size=i, dev_size=j)

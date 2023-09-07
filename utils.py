@@ -42,7 +42,7 @@ def predict_and_eval(model, X_test, y_test):
     )'''
     accuracy_test = accuracy_score(predicted, y_test)
     print("Accuracy_test  : {0:2f}%".format(accuracy_test*100))
-    print("-----------------------------------------------------------")
+    print("---------------------------------------------------------------")
     '''disp = metrics.ConfusionMatrixDisplay.from_predictions(y_test, predicted)
     disp.figure_.suptitle("Confusion Matrix")
     print(f"Confusion matrix:\n{disp.confusion_matrix}")
