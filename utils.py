@@ -31,7 +31,9 @@ def split_train_dev_test(X, y, test_size, dev_size):
 
 
 
-# Question 2:
+# # 6. Getting model predictions on test set
+# 7. Qualitative sanity check of the predictions
+# 8. Evaluation
 def predict_and_eval(model, X_test, y_test):
     predicted = model.predict(X_test)
     '''print(
