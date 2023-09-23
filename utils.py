@@ -64,6 +64,11 @@ def predict_and_eval(model, X_test, y_test):
         "Classification report rebuilt from confusion matrix:\n"
         f"{metrics.classification_report(y_true, y_pred)}\n"
     )'''
+
+def hparams_combination(param_dict) :
+    keys, values = zip(*param_dict.items())
+    permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    return permutations_dicts
 def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
     
     keys, values = zip(*list_of_all_param_combination.items())
@@ -88,7 +93,7 @@ def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
                         cval = v
                     elif k == 'kernels':
                         kval = v
-        #print(kval,cval,g)    
+        print(kval,cval,g)    
         cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
         cur_model.fit(X_train, Y_train)
         cv_scores = cur_model.score(x_dev, y_dev)
