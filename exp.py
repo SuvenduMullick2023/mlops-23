@@ -7,7 +7,7 @@ This example shows how scikit-learn can be used to recognize images of
 hand-written digits, from 0-9.
 
 """
-
+ # Assignment 2 and 3 is updated
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # License: BSD 3 clause
 
@@ -21,8 +21,8 @@ X, y = read_digits()
 # 3. Data splitting -- to create train and test sets
 
 # X_train, X_test, y_train, y_test = split_data(X,y, test_size=0.3)
-test_size = [0.1, 0.2, 0.3]
-dev_size = [0.1, 0.2, 0.3]
+test_size = [0.1, 0.2, 0.3,0.4]
+dev_size = [0.1, 0.2, 0.3,0.4]
 for i in test_size :
     for j in dev_size : 
         X_train, X_test,X_dev, y_train, y_test, y_dev = split_train_dev_test(X, y, test_size=i, dev_size=j)

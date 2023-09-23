@@ -31,7 +31,9 @@ def split_train_dev_test(X, y, test_size, dev_size):
 
 
 
-# Question 2:
+# # 6. Getting model predictions on test set
+# 7. Qualitative sanity check of the predictions
+# 8. Evaluation
 def predict_and_eval(model, X_test, y_test):
     predicted = model.predict(X_test)
     '''print(
@@ -40,7 +42,7 @@ def predict_and_eval(model, X_test, y_test):
     )'''
     accuracy_test = accuracy_score(predicted, y_test)
     print("Accuracy_test  : {0:2f}%".format(accuracy_test*100))
-    print("-----------------------------------------------------------")
+    print("---------------------------------------------------------------")
     '''disp = metrics.ConfusionMatrixDisplay.from_predictions(y_test, predicted)
     disp.figure_.suptitle("Confusion Matrix")
     print(f"Confusion matrix:\n{disp.confusion_matrix}")
@@ -62,6 +64,11 @@ def predict_and_eval(model, X_test, y_test):
         "Classification report rebuilt from confusion matrix:\n"
         f"{metrics.classification_report(y_true, y_pred)}\n"
     )'''
+
+def hparams_combination(param_dict) :
+    keys, values = zip(*param_dict.items())
+    permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    return permutations_dicts
 def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
     
     keys, values = zip(*list_of_all_param_combination.items())
@@ -86,7 +93,7 @@ def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
                         cval = v
                     elif k == 'kernels':
                         kval = v
-        #print(kval,cval,g)    
+        print(kval,cval,g)    
         cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
         cur_model.fit(X_train, Y_train)
         cv_scores = cur_model.score(x_dev, y_dev)
