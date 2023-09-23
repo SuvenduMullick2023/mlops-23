@@ -13,6 +13,7 @@ def read_digits():
     digits = datasets.load_digits()
     X = digits.images
     y = digits.target
+    print("Image Data Shape" , digits.data[0].shape)
     return X, y 
 
 def preprocess_data(data):
@@ -93,7 +94,7 @@ def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
                         cval = v
                     elif k == 'kernels':
                         kval = v
-        print(kval,cval,g)    
+        #print(kval,cval,g)    
         cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
         cur_model.fit(X_train, Y_train)
         cv_scores = cur_model.score(x_dev, y_dev)

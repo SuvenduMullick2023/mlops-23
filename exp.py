@@ -31,7 +31,9 @@ for i in test_size :
         X_train = preprocess_data(X_train)
         X_dev = preprocess_data(X_dev)
         X_test = preprocess_data(X_test)
-        
+        print('Train : {0} Test_size : {1} Dev_size :{2}'.format( len(X_train) , len(X_dev),len(X_test)))
+        print("Total sample :",(len(X_train)+ len(X_dev)+len(X_test)) )
+
         
         
         
