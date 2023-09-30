@@ -4,6 +4,8 @@ from sklearn.model_selection import GridSearchCV
 import numpy as np
 import itertools  
 from sklearn.metrics import accuracy_score
+
+#from skimage.transform import rescale, resize, downscale_local_mean
 #import  matplotlib as plt
 # we will put all utils here
 
@@ -13,8 +15,17 @@ def read_digits():
     digits = datasets.load_digits()
     X = digits.images
     y = digits.target
+    #print("Image Data Shape" , digits.data[0].shape)
     return X, y 
 
+def resize_digits():
+    digits = datasets.load_digits()
+    X = digits.images
+    y = digits.target
+    '''for row in range(1797):
+        for i in range(0,63):
+        newfeatures.iloc[row,16*i]=features[row][i]
+        newfeatures.fillna(method="ffill",axis=1,inplace=True)'''
 def preprocess_data(data):
     # flatten the images
     n_samples = len(data)
@@ -68,6 +79,7 @@ def predict_and_eval(model, X_test, y_test):
 def hparams_combination(param_dict) :
     keys, values = zip(*param_dict.items())
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    print(permutations_dicts)
     return permutations_dicts
 def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
     
@@ -93,7 +105,7 @@ def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
                         cval = v
                     elif k == 'kernels':
                         kval = v
-        print(kval,cval,g)    
+        #print(kval,cval,g)    
         cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
         cur_model.fit(X_train, Y_train)
         cv_scores = cur_model.score(x_dev, y_dev)
