@@ -4,7 +4,8 @@ from sklearn.model_selection import GridSearchCV
 import numpy as np
 import itertools  
 from sklearn.metrics import accuracy_score
-
+from joblib import dump, load
+from sklearn import tree
 #from skimage.transform import rescale, resize, downscale_local_mean
 #import  matplotlib as plt
 # we will put all utils here
@@ -37,7 +38,9 @@ def preprocess_data(data):
 def split_train_dev_test(X, y, test_size, dev_size):
     # Split data into 60% train and 20% test subsets and 20% validation
     X_train_dev, X_test, y_train_dev, y_test = train_test_split(X, y, test_size=test_size, shuffle=False)
-    X_train, X_dev, y_train, y_dev = train_test_split(X_train_dev, y_train_dev, test_size=dev_size, shuffle=False)
+    print( 'train_dev_size =', len(X_train_dev))
+    X_train, X_dev, y_train, y_dev = train_test_split(X_train_dev, y_train_dev, test_size=dev_size/(1-test_size), shuffle=False)
+    print('train_size =',len(X_train))
     return X_train,X_test,X_dev,y_train,y_test,y_dev
 
 
@@ -52,8 +55,9 @@ def predict_and_eval(model, X_test, y_test):
     f"{metrics.classification_report(y_test, predicted)}\n"
     )'''
     accuracy_test = accuracy_score(predicted, y_test)
-    print("Accuracy_test  : {0:2f}%".format(accuracy_test*100))
-    print("---------------------------------------------------------------")
+    return accuracy_test
+    
+    #print("---------------------------------------------------------------")
     '''disp = metrics.ConfusionMatrixDisplay.from_predictions(y_test, predicted)
     disp.figure_.suptitle("Confusion Matrix")
     print(f"Confusion matrix:\n{disp.confusion_matrix}")
@@ -81,7 +85,71 @@ def hparams_combination(param_dict) :
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
     print(permutations_dicts)
     return permutations_dicts
-def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
+def tune_hparams_svm( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
+    
+    keys, values = zip(*list_of_all_param_combination.items())
+    permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    #print("The combinations dictionary : " + str(permutations_dicts))
+    
+    
+    # default setting     
+    g = 'scale'
+    cval = 1.0
+    kval = 'rbf'
+    best_score =[0,0]
+    best_model = None
+    avg_scores ={}
+    for model_params in permutations_dicts :
+        #print(dict1)
+        '''for k,v in dict1.items():
+                    
+                    if k == 'gamma':
+                        g = v
+                    elif k =='C':
+                        cval = v
+                    elif k == 'kernels':
+                        kval = v'''
+        #print(kval,cval,g)    
+        #cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
+        #cur_model =svm.SVC(**model_params)
+        cur_model = train_model(X_train, Y_train, model_params, model_type="svm")
+        
+        cv_scores = predict_and_eval(cur_model, x_dev, y_dev)
+        avg_scores[str(kval) + "-" + str(cval)+ "-" + str(g)]= round(np.average(cv_scores),3)
+        
+        if best_score[1] < round(np.average(cv_scores),3) :
+            best_model = cur_model
+            best_score[1] = round(np.average(cv_scores),3)
+            best_score[0] = str(kval) + "-" + str(cval)+ "-" + str(g)
+            
+            y_pred_train =best_model.predict(X_train)
+            accuracy_train = accuracy_score(y_pred_train, Y_train)
+            y_pred_dev =best_model.predict(x_dev)
+            accuracy_dev = accuracy_score(y_pred_dev, y_dev)
+            
+    #print('All_scores :' ,avg_scores)
+    print("Optimal parameters ::: Kernel--C--gamma  : ", best_score)
+    print(" SVM == Accuracy Train : {0:2f}%  Accuracy_Dev :{1:2f}%".format(accuracy_train*100, accuracy_dev*100 ))
+    return best_model
+
+# train the model of choice with the model prameter    
+def train_model(x, y, model_params, model_type="svm"):
+    if model_type == "svm":
+        # Create a classifier: a support vector classifier
+        clf = svm.SVC
+    model = clf(**model_params)
+    # train the model
+    model.fit(x, y)
+    if model_type == "tree":
+        # Create a classifier: a support vector classifier
+        clf = tree.DecisionTreeClassifier(random_state=0)
+    model = clf(**model_params)
+    # train the model
+    model.fit(x, y)
+    return model    
+
+
+def tune_hparams_tree( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
     
     keys, values = zip(*list_of_all_param_combination.items())
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
@@ -106,15 +174,19 @@ def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
                     elif k == 'kernels':
                         kval = v
         #print(kval,cval,g)    
-        cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
+        #cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
+        cur_model = tree.DecisionTreeClassifier(random_state=0)
+        #tree.plot_tree(cur_model)            
+    
+        #cur_model =svm.SVC(dict1)
         cur_model.fit(X_train, Y_train)
         cv_scores = cur_model.score(x_dev, y_dev)
-        avg_scores[str(kval) + "-" + str(cval)+ "-" + str(g)]= round(np.average(cv_scores),3)
+        #avg_scores[str(kval) + "-" + str(cval)+ "-" + str(g)]= round(np.average(cv_scores),3)
         
         if best_score[1] < round(np.average(cv_scores),3) :
             best_model = cur_model
             best_score[1] = round(np.average(cv_scores),3)
-            best_score[0] = str(kval) + "-" + str(cval)+ "-" + str(g)
+            #best_score[0] = str(kval) + "-" + str(cval)+ "-" + str(g)
             
             y_pred_train =best_model.predict(X_train)
             accuracy_train = accuracy_score(y_pred_train, Y_train)
@@ -122,8 +194,6 @@ def tune_hparams( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination):
             accuracy_dev = accuracy_score(y_pred_dev, y_dev)
             
     #print('All_scores :' ,avg_scores)
-    print("Optimal parameters ::: Kernel--C--gamma  : ", best_score)
-    print("Accuracy Train : {0:2f}%  Accuracy_Dev :{1:2f}%".format(accuracy_train*100, accuracy_dev*100 ))
-    return best_model
-    
-    
+    #print("Optimal parameters ::: Kernel--C--gamma  : ", best_score)
+    print(" Tree   == Accuracy Train : {0:2f}%  Accuracy_Dev :{1:2f}%".format(accuracy_train*100, accuracy_dev*100 ))
+    return best_model    
