@@ -22,4 +22,6 @@ jobs:
         run:  pip3 install --no-cache-dir -r requirements.txt
       - name: Run experiment
         run: python exp.py
+      - name: Build the Docker image
+        run: ./docker_run.sh
           
