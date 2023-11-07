@@ -16,7 +16,14 @@ RUN pip install -r requirements.txt
 # Define a volume to save the trained models
 VOLUME /app/models
 
-# Command to run when the container starts
 CMD ["python", "exp.py"]
+
+ENV FLASK_APP=api/app_1.py
+
+CMD ['python3','-m','flask','run','--host=0.0.0.0']
+
+#EXPOSE 5000
+# Command to run when the container starts
+#CMD ["python", "exp.py"]
 
 
