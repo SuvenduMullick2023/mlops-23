@@ -183,7 +183,7 @@ for iteration in  range(iteration_no) :
 
 
                 print('Train : {0} Test_size : {1} Dev_size :{2}'.format( round(1-i-j,1) , i,  j)," ", end = "")
-#print(pd.DataFrame(output_result).groupby('model_type').describe().T)
+print(pd.DataFrame(df_output_result).groupby('model_type').describe().T)
                 # 6. Getting model predictions on test set
                 # 7. Qualitative sanity check of the predictions
                 # 8. Evaluation
