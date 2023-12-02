@@ -17,6 +17,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 VOLUME /app/models
 
 # Command to run when the container starts
-CMD ["python", "exp.py","--model_type", "--random_state"]
+CMD ["python", "exp.py"]
+CMD ["pytest", "test_sample"]
+
+ENV FLASK_APP=api/app.py
+
+CMD ["python","-m","flask","run","--host=0.0.0.0"]
 
 
