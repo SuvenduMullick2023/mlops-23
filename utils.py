@@ -6,6 +6,9 @@ import itertools
 from sklearn.metrics import accuracy_score
 from joblib import dump, load
 from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import preprocessing
+from sklearn.linear_model import LogisticRegression
 import pdb, os
 #from skimage.transform import rescale, resize, downscale_local_mean
 #import  matplotlib as plt
@@ -32,18 +35,22 @@ def resize_digits():
         newfeatures.fillna(method="ffill",axis=1,inplace=True)'''
 def preprocess_data(data):
     # flatten the images
+    reshaped_data = data.reshape(data.shape[0], -1)
+    data = preprocessing.normalize(reshaped_data)
     n_samples = len(data)
     data = data.reshape((n_samples, -1))
     return data
 
 
 
-def split_train_dev_test(X, y, test_size, dev_size):
+def split_train_dev_test(X, y, test_size, dev_size, random_state):
     # Split data into 60% train and 20% test subsets and 20% validation
-    X_train_dev, X_test, y_train_dev, y_test = train_test_split(X, y, test_size=test_size, shuffle=False)
-    print( 'train_dev_size =', len(X_train_dev))
-    X_train, X_dev, y_train, y_dev = train_test_split(X_train_dev, y_train_dev, test_size=dev_size/(1-test_size), shuffle=False)
-    print('train_size =',len(X_train))
+    X_train_dev, X_test, y_train_dev, y_test = train_test_split(X, y, test_size=test_size, shuffle=False \
+                                                                ,random_state=random_state)
+    print( 'train_dev_size =', len(X_train_dev), end =" ")
+    X_train, X_dev, y_train, y_dev = train_test_split(X_train_dev, y_train_dev, test_size=dev_size/(1-test_size)\
+                                                      , shuffle=False,random_state=random_state)
+    print('train_size =',len(X_train),"test-size =",len(X_test))
     return X_train,X_test,X_dev,y_train,y_test,y_dev
 
 
@@ -114,6 +121,7 @@ def tune_hparams_svm( X_train, Y_train,x_dev, y_dev,list_of_all_param_combinatio
                         cval = v
                     elif k == 'kernels':
                         kval = v'''
+        
         #print(kval,cval,g)    
         #cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
         #cur_model =svm.SVC(**model_params)
@@ -138,8 +146,8 @@ def tune_hparams_svm( X_train, Y_train,x_dev, y_dev,list_of_all_param_combinatio
     
     os.makedirs('models', exist_ok=True)
         
-    model_path = "./models/{}_".format(model_type) +"_".join(["{}_{}".format(k,v) for k,v in best_hparams.items()]) + ".joblib"
-    print(model_path)
+    model_path = "./models/{}_".format(model_type) +"m22aie218"+"_".join(["{}_{}".format(k,v) for k,v in best_hparams.items()]) + ".joblib"
+    #print(model_path)
     # save the best_model    
     dump(best_model, model_path)
     #print('All_scores :' ,avg_scores)
@@ -156,12 +164,27 @@ def train_model(x, y, model_params, model_type="svm"):
     # train the model
         model.fit(x, y)
     if model_type == "tree":
-        # Create a classifier: a support vector classifier
+        # Create a classifier: a RandomForestClassifier classifier
         clf = tree.DecisionTreeClassifier
+        # Create a RandomForestClassifier with a random seed
+        random_seed =42
+        #clf = RandomForestClassifier(n_estimators=100, random_state=random_seed)
         #print(model_params)
         model = clf(**model_params)
     # train the model
         model.fit(x, y)
+
+    if model_type == "LR":
+        print(model_params)
+        # Create a classifier: a LR classifier
+        clf = LogisticRegression
+        # Create a LR with a random seed
+        
+        #clf = RandomForestClassifier(n_estimators=100, random_state=random_seed)
+        #print(model_params)
+        model = clf(**model_params)
+    # train the model
+        model.fit(x, y)    
     return model    
 
 
@@ -211,9 +234,91 @@ def tune_hparams_tree( X_train, Y_train,x_dev, y_dev,list_of_all_param_combinati
             #accuracy_dev = accuracy_score(y_pred_dev, y_dev)
     
     model_path = "./models/{}_".format(model_type) +"_".join(["{}_{}".format(k,v) for k,v in best_hparams.items()]) + ".joblib"
-    print(model_path)
+    #print(model_path)
+    # Create a folder to store models if it doesn't exist
+    models_folder = "models"
+    os.makedirs(models_folder, exist_ok=True)
     # save the best_model    
     dump(best_model, model_path)
+
+    '''# Create a folder to store results if it doesn't exist
+    results_folder = "results"
+    os.makedirs(results_folder, exist_ok=True)
+    # Save the results to a file in the "results" folder
+    results_filename = f"{results_folder}/svm_gamma_0.001_C_0.2_{random_state}.txt"
+    with open(results_filename, 'w') as results_file:
+        results_file.write(results_str + f", Model saved at {os.path.abspath(model_filename)}")
+
+    print(f"Results saved to: {results_filename}")'''
+    #print('All_scores :' ,avg_scores)
+    #print("Optimal parameters ::: Kernel--C--gamma  : ", best_score)
+    #print(" Tree   == Accuracy Train : {0:2f}%  Accuracy_Dev :{1:2f}%".format(accuracy_train*100, accuracy_dev*100 ))
+    return best_hparams, model_path, best_accuracy
+
+def tune_hparams_LR( X_train, Y_train,x_dev, y_dev,list_of_all_param_combination,model_type ='LR'):
+    
+    keys, values = zip(*list_of_all_param_combination.items())
+    permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    #print("The combinations dictionary : " + str(permutations_dicts))
+    
+    
+    # default setting     
+    best_hparams = {}
+    best_score =[0,0]
+    best_model = None
+    avg_scores ={}
+    for model_params in permutations_dicts :
+        #print(dict1)
+        '''for k,v in dict1.items():
+                    
+                    if k == 'gamma':
+                        g = v
+                    elif k =='C':
+                        cval = v
+                    elif k == 'kernels':
+                        kval = v'''
+        #print(kval,cval,g)
+        #     
+        #cur_model =svm.SVC(kernel =kval,C=cval,gamma= g)
+        #print(model_params)
+        cur_model = train_model(X_train, Y_train, model_params, model_type="LR")
+        #cur_model = tree.DecisionTreeClassifier(random_state=0)
+        #tree.plot_tree(cur_model)            
+    
+        #cur_model =svm.SVC(dict1)
+        #cur_model.fit(X_train, Y_train)
+        #cv_scores = cur_model.score(x_dev, y_dev)
+        cv_scores = predict_and_eval(cur_model, x_dev, y_dev)
+        #avg_scores[str(kval) + "-" + str(cval)+ "-" + str(g)]= round(np.average(cv_scores),3)
+        
+        if best_score[1] < round(np.average(cv_scores),3) :
+            best_model = cur_model
+            best_score[1] = round(np.average(cv_scores),3)
+            #best_score[0] = str(kval) + "-" + str(cval)+ "-" + str(g)
+            best_hparams = model_params
+            best_accuracy = best_score[1]
+            #y_pred_train = best_model.predict(X_train)
+            #accuracy_train = accuracy_score(y_pred_train, Y_train)
+            #y_pred_dev = best_model.predict(x_dev)
+            #accuracy_dev = accuracy_score(y_pred_dev, y_dev)
+    
+    model_path = "./models/{}_".format(model_type) +"m22aie218"+"_".join(["{}_{}".format(k,v) for k,v in best_hparams.items()]) + ".joblib"
+    print(model_path)
+    # Create a folder to store models if it doesn't exist
+    models_folder = "models"
+    os.makedirs(models_folder, exist_ok=True)
+    # save the best_model    
+    dump(best_model, model_path)
+
+    '''# Create a folder to store results if it doesn't exist
+    results_folder = "results"
+    os.makedirs(results_folder, exist_ok=True)
+    # Save the results to a file in the "results" folder
+    results_filename = f"{results_folder}/svm_gamma_0.001_C_0.2_{random_state}.txt"
+    with open(results_filename, 'w') as results_file:
+        results_file.write(results_str + f", Model saved at {os.path.abspath(model_filename)}")
+
+    print(f"Results saved to: {results_filename}")'''
     #print('All_scores :' ,avg_scores)
     #print("Optimal parameters ::: Kernel--C--gamma  : ", best_score)
     #print(" Tree   == Accuracy Train : {0:2f}%  Accuracy_Dev :{1:2f}%".format(accuracy_train*100, accuracy_dev*100 ))

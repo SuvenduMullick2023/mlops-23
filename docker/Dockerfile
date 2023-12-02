@@ -10,13 +10,18 @@ COPY . /app
 # Install any dependencies required for training
 # For example, if you're using a requirements.txt file:
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-
+#RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Define a volume to save the trained models
 VOLUME /app/models
 
 # Command to run when the container starts
 CMD ["python", "exp.py"]
+CMD ["pytest", "test_sample"]
+
+ENV FLASK_APP=api/app.py
+
+CMD ["python","-m","flask","run","--host=0.0.0.0"]
 
 
